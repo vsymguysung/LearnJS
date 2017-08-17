@@ -1,0 +1,835 @@
+import fs from 'fs'
+
+var output = fs.readFileSync('data.txt', 'utf8')
+                .split('\n')
+                .map(line => line.split('\t'))
+                .reduce( (customers, line) => {
+                  console.log('hello', line)
+                  console.log('hello', customers)
+                  customers[line[0]] = customers[line[0]] || []
+                  customers[line[0]].push({
+                    name: line[1],
+                    price: line[2],
+                    quantity: line[3]
+                  })
+                  return customers
+                }, {})
+
+console.log('output:', JSON.stringify(output, null, 2));
+
+
+var foo = { n: 1 };
+console.log('foo.x', foo.x);
+var bar = foo;
+console.log('foo', foo);
+console.log('bar', bar);
+foo.x = foo = { n: 2 };
+console.log('foo.x', foo.x);
+
+
+var aa = [];
+aa.push(1);
+aa.push(2);
+console.log('aa.length', aa.length);
+
+
+var str = "I'm a lasaagna hog".split("").reverse().join("");
+console.log('str', str);
+
+
+console.log('one');
+setTimeout(function() { console.log('two'); }, 0);
+console.log('three');
+
+
+//
+// memoize
+//
+let memoize = fn => {
+  let cache = {};
+
+  return (...args) => {
+    let result;
+    let key = JSON.stringify(args);
+    if (cache[key]) {
+      console.log(`cache[key]: ${cache[key]}`);
+      return cache[key];
+    }
+    else {
+      return cache[key] = fn(...args);
+    }
+  }
+}
+
+function add (a, b) {
+  let sum = a + b;
+  console.log(`sum:${sum}`);
+  return sum;
+}
+var addMemoized = memoize(add);
+
+addMemoized( 1, 3 );
+addMemoized( 1, 3 );
+addMemoized( 1, 5 );
+addMemoized( 1, 5 );
+addMemoized( 1, 7 );
+addMemoized( 1, 7 );
+
+
+// Funcional Programming: Closure.
+//const createRequester = (options) => {
+//	return (otherOptions) => {
+//		return request(Object.assign(
+//			{}, options, otherOptions
+//		));
+//	};
+//};
+//
+//const customRequest = createRequester ({
+//	headers: { 'X-Custom': "mkey" }	
+//});
+//
+//
+//const userPromise = customRequest({ url: '/users' });
+//const taskPromise = customRequest({ url: '/tasks' });
+//
+//const partialFromBind = (fn, ...args) => {
+//	return fn.bind(null, ...args);
+//}
+//
+//const partial = (fn, ...args) => {
+//	return (...otherArgs) => {
+//		return fn(...args, ...otherArgs);
+//	}
+//}
+
+
+//// Currying...
+//const add = x => y => x + y;
+//
+//function add(x) {
+//  return function(y) {
+//    return x + y;
+//  }
+//}
+
+
+// Recursssion
+// Tail Call Optimization in ES2015
+
+// Un Optimized Code.
+const factorial = n => {
+  if (n < 2) {
+    return 1;
+  }
+
+  return n * factorial(n-1);
+};
+// const value = factorial(100000);
+// console.log(value);
+// RangeError: Maximum call stack size exceeded.
+
+
+// Optimized Code with Tail Call Optimization.
+const factorialOptimized = (n, accum = 1) => {
+  if (n < 2) {
+    return accum;
+  }
+
+  return factorial(n -1, n * accum);
+}
+
+// Fibonacci
+function fibonacci(n) {
+	 return n < 1 ? 0
+				: n <= 2 ? 1
+				: fibonacci(n - 1) + fibonacci(n - 2);
+}
+console.log(fibonacci(4));
+
+
+//
+// ES6 Class: synthentic sugar of Prototypal inheritance.
+//class Point {
+//  constructor(x, y) {
+//    this.x = x;
+//    this.y = y;
+//  }
+//
+//  moveBy(dx, dy) {
+//    this.x += dx;
+//    this.y += dy;
+//  }
+//}
+
+// Factory fn.
+function Point(x, y) {
+  this.x = x;
+  this.y = y;
+}
+
+// Prototype
+Point.prototype.moveBy = function(dx, dy) {
+  this.x += dx;
+  this.y += dy;
+}
+
+//
+// LinkedIn Tech Interview Question
+//
+//var Foo = function( a ) { 
+//  function bar() {   
+//    return a; 
+//  }
+//  this.baz = function() {   
+//    return a; 
+//  };
+//};
+// 
+//Foo.prototype = {
+//  biz: function() {    
+//    return a; 
+//  }
+//};
+//var f = new Foo( 7 );
+//
+//f.bar(); //  f.bar is not a function error
+//f.baz(); // 7
+//f.biz(); // a is not defined error
+
+
+var Foo = function( a ) { 
+    this.a = a;
+      
+    this.bar = function() {
+      return this.a; 
+    };
+    this.baz = function() {   
+      return this.a; 
+    };
+};
+ 
+Foo.prototype = {
+    biz: function() { 
+      return this.a; 
+    }
+};
+var f = new Foo( 7 );
+
+f.bar()
+f.baz()
+f.biz()
+
+
+//
+// Functional Programming
+const partialApply = (fn, ...fixedArgs) => {
+  return function (...remainingArgs) {
+    return fn.apply(this, fixedArgs.concat(remainingArgs));
+  }
+}
+
+const compose = (...fns) => 
+											 x => fns.reduceRight((v, f) => f(v), x);
+
+const pipe = (...fns) => x => fns.reduce((v, f) => f(v), x);
+
+const fn1 = s => s.toLowerCase();
+const fn2 = s => s.split('').reverse().join('');
+
+const newFunc = pipe(fn1, fn2);
+const result = newFunc('Time');  // emit
+
+//
+// __proto__  vs  prototype
+//
+// __proto__ is the actual object that is used in the lookup chain 
+// to resolve methods, properties.
+//
+// prototype is the object that is used to build __proto__ of
+// a newly created object by a constructor function.
+//
+function Foo () {
+
+}; // Constructor Function.
+
+if( ( new Foo ).__proto__ === Foo.prototype ) { // true
+  console.log('(new Foo).__proto__ === Foo.prototype is true');
+}
+
+( new Foo() ).prototype === undefined // true
+var FooObj = {};
+FooObj.prototype === undefined // true
+FooObj.__proto__ === Object.prototype // true
+// Global `Object` is function object because it has the prototype property.
+// If `Object` is not function object, you wouldn't be able to call `new Object()`
+
+function Dog() {   };
+Dog.prototype.breed = "Bulldog";
+let myDoggie = new Dog();
+myDoggie.breed;  // "Bulldog"
+myDoggie.__proto__ // Object {breed: "Bulldog"}
+myDoggie.prototype // undefined
+Dog.prototype // Object {breed: "Bulldog"}
+
+//
+// Object.create() is the best way of setting the prototype.
+// Do not use __proto__ or setPrototypeOf() due to the performance/optimization issue 
+// in JavaScript engine.
+//
+const cat = {
+  init: function(sound) {
+    this.sound = sound;
+    return this; // Enable the chaining...
+  },
+  makeSound: function() {
+    console.log(this.sound);
+  }
+}
+
+const mark = Object.create(cat);
+mark.init('mewuuuUUFF');
+// Chaining
+//const mark = Object.create(cat).init('mewuuuUUFF');
+mark.makeSound();
+
+const waff = Object.create(cat);
+waff.init('mrrrrooooow');
+// Chaining
+// const waff = Object.create(cat).init('mrrrrooooow');
+waff.makeSound();
+
+
+//
+// Prototype Quiz.
+//
+const food = {
+  init: function(type) {
+    this.type = type;
+  },
+
+  eat: function() {
+    console.log('you ate the ' + this.type);
+  }
+}
+
+const waffle = Object.create(food);
+waffle.eat(); // undefined
+food.type = 'fjdkal;fjdkal;fjdka';
+waffle.eat(); // fjdkal;fjdkal;fjdka
+waffle.init('waffle');
+waffle.eat(); // waffle
+
+food.isPrototypeOf(waffle);
+
+
+//
+// Recursion
+//
+//
+let categories = [
+  { id: 'animals', parent: null },
+  { id: 'mamals', parent: 'animals' },
+  { id: 'cats', parent: 'mamals' },
+  { id: 'dogs', parent: 'mamals' },
+  { id: 'chihuahua', parent: 'dogs' },
+  { id: 'labrador', parent: 'dogs' },
+  { id: 'persian', parent: 'cats' },
+  { id: 'siamese', parent: 'cats' }
+];
+
+let makeTree = (categories, parent) => {
+  let node = {};
+  categories.filter(c => c.parent === parent)
+            .forEach(c => node[c.id] = 
+                     makeTree(categories, c.id))
+  return node;
+}
+
+console.log(JSON.stringify(makeTree(categories, null), null, 2));
+
+
+//
+// Functor
+//
+function stringFunctor(value, fn) {
+  var chars = value.split("");
+  return chars.map(function(char) {
+    return String.fromCharCode(fn(char.charCodeAt(0)));
+  }).join("");
+}
+
+function plus1(value) {
+  return value + 1;
+}
+
+function minus1(value) {
+  return value - 1;
+}
+
+console.log([3,4].map(plus1));
+console.log(stringFunctor("ABC", plus1));
+console.log(stringFunctor("XYZ", minus1));
+
+
+//
+// Functional Programming Excercise
+//
+const withConstructor = constructor => o => {
+    const proto = Object.assign({},
+                                Object.getPrototypeOf(o),
+                                { constructor }
+                               );
+    return Object.assign(Object.create(proto), o);
+};
+
+//const pipe = (...fns) => x => fns.reduce((y, f) => f(y), x);
+
+const withFlying = o => {
+    let isFlying = false;
+    return {
+      ...o,
+      fly () {
+        isFlying = true;
+        return this;
+      },
+      land () {
+        isFlying = false;
+        return this;
+      },
+      isFlying: () => isFlying
+    };
+};
+
+const withBattery = ({ capacity }) => o => {
+    let percentCharged = 100;
+    return {
+      ...o,
+      draw (percent) {
+        const remaining = percentCharged - percent;
+        percentCharged = remaining > 0 ? remaining : 0;
+        return this;
+      },
+      getCharge: () => percentCharged,
+      get capacity () {
+        return capacity
+      }
+    };
+};
+
+const createDrone = ({ capacity = '3000mAh' }) => pipe(
+    withFlying,
+    withBattery({ capacity }),
+    withConstructor(createDrone)
+)({b:'test b'});
+
+const myDrone = createDrone({ capacity: '5500mAh' });
+//const myDrone = createDrone({});
+
+console.log(`
+              can fly:  ${ myDrone.fly().isFlying() === true }
+              can land: ${ myDrone.land().isFlying() === false }
+              battery capacity: ${ myDrone.capacity }
+              battery status: ${ myDrone.draw(50).getCharge() }%
+              battery drained: ${ myDrone.draw(75).getCharge() }%
+              b: ${myDrone.b}
+            `);
+
+console.log(`
+              constructor linked: ${ myDrone.constructor === createDrone }
+            `);
+//
+// Function hoisting
+//
+//
+
+//undecalredFunction(); // Error
+
+//hoist(); // Error: undefined is not a function
+//
+//// Function Expression with Named function
+//var hoist = function hoist() {
+//  console.log("no hoisted!");
+//};
+
+//hoist(); // Reference Error: hoist is not defined.
+//
+//// Function Expression with Named function
+//var func = function hoist() {
+//  console.log("not hoisted!");
+//}
+
+
+function persistence(num) {
+   let count = 0;
+   
+   let iterate = (n) => {
+     count ++;
+     let arr = String(n).split('');
+     console.log('arr:', arr);
+     if (arr.length === 1) return count;
+
+     let ret = arr.reduce((acc, v)=>{
+        return acc * v; 
+     }, 1);
+     iterate(ret);
+   };
+	 iterate(num);
+   return count
+}
+console.log(`persistence: ${persistence(9999)}`);
+
+
+
+function iqTest(numbers){
+	numbers = numbers.trim().split(" ").map(el => parseInt(el));
+
+	let ret = 0;
+  let odds = numbers.filter( el => el % 2 === 1 );
+  let evens = numbers.filter( el => el %2 === 0 );
+	console.log(`odds: ${odds}`);
+	console.log(`evens: ${evens}`);
+  
+  if (odds.length < evens.length) {
+		ret = numbers.indexOf(odds[0]) + 1  
+  }
+  else {
+		ret = numbers.indexOf(evens[0]) + 1  
+  }
+	return ret;
+}
+console.log(`iqTest: ${iqTest("2 4 7 8 10")}`);
+console.log(`iqTest: ${iqTest("1 2 2")}`);
+
+
+
+//
+//Debounce: 
+//
+function debounce(fn, wait) {
+	let timeout;
+	
+	return function (...args)  {
+		console.log(`this: ${JSON.stringify(this)}`);
+		const context = this
+		clearTimeout(timeout)
+		timeout = setTimeout(()=> fn.apply(context, args), wait)
+	}
+}
+/* usage */
+function sayHello() {
+  console.log('My name is', this.name)
+}
+const amy = {
+  name: 'amy',
+  speak: debounce(sayHello),
+}
+amy.speak()
+amy.speak()
+amy.speak()
+amy.speak() // My name is amy
+
+function sayHello1(...a) {
+	console.log('this: ', this);
+  console.log('arg:', a)
+}
+const debounceSayHello1 = debounce(sayHello1, 100);
+debounceSayHello1(1);
+debounceSayHello1(2,3);
+debounceSayHello1(3,4);
+debounceSayHello1(4,5);
+debounceSayHello1(5,6);
+setTimeout(()=> debounceSayHello1(6), 200);
+
+console.log(`this in node: ${JSON.stringify(this)}`);
+
+//
+// add Class on a DOM element.
+//
+function hasClass(elem, className) {
+	return new RegExp(' ' + className + ' ').test(' ' + elem.className + ' ');
+}
+function addClass(elem, className) {
+	if (!hasClass(elem, className)) {
+		elem.className += ' ' + className;
+	}
+}
+
+
+//
+// Reduce example
+//
+const shallowFlattenArr = (arr) => {
+	return arr.reduce((acc, curr)=> acc.concat(curr), []);
+}
+console.log(shallowFlattenArr([[1,2,3], [3,2,1], [5,2,1]]));
+
+
+const splitEvery = (chunkSize, arr) => {
+	return arr.reduce((acc, curr, i) => {
+		const idx = Math.floor(i/chunkSize);
+		acc[idx] = (acc[idx] || []).concat(curr);
+		return acc;
+	}, []);
+};
+console.log('splitEvery', splitEvery(3, [0,1,2,3,4,5,6,7,8,9]));
+
+const composeFns = (...fns) => {
+	return x => fns.reduceRight(
+		(acc, curr) => curr(acc),
+		x
+	)
+}
+const doubleTheSquare = composeFns(
+	x => x * 2,
+	x => x * x
+);
+console.log(doubleTheSquare(10));
+
+
+// Curry Functions
+const curry = (fn) => 
+	(...args) => (
+		fn.length <= 1 || args.length >= fn.length
+			? fn(...args)
+			: args.reduce((acc, curr) => curry(acc.bind(null, curr)), fn)
+	)
+console.log(
+	curry( (a,b,c,d,e) => a + b + c + d + e )
+	("jared", " ")("curried")(" ", "again!")
+)
+
+// Promise Thunk Waterfall
+const waterfall = (...promiseThunks) => (
+	() => promiseThunks.reduce(
+		(acc, curr) => acc.then( () => curr() ),
+		Promise.resolve()
+	)
+)
+
+waterfall (
+	() => new Promise( (resolve) => setTimeout(
+					() => resolve( console.log(1) ),
+						1000
+	)),
+	() => new Promise( (resolve) => setTimeout(
+					() => resolve( console.log(2) ),
+						1000
+	)),
+	() => new Promise( (resolve) => setTimeout(
+					() => resolve( console.log(3) ),
+						1000
+	)),
+)
+
+//
+// Data conversion Excercise
+//
+const startShape = 
+	[
+		{ key: "name", value: "jared" },
+		{ key: "age", value: "old" },
+		{ key: "food", value: "bacon" },
+		{ key: "kids", value: "gazillions" },
+		{ key: "garbageA", value: "valueA" },
+		{ key: "garbageB", value: "valueB" }
+	]
+
+/* Turn into this shape while removing "garbage" entries
+	{
+		age: "old",
+	 	food: "bacon",
+	 	kids: "gazillions",
+	 	name: "jared"
+	}
+ */
+
+const endShape = startShape
+	.filter( ({key}) => !/garbage/.test(key) )
+	.reduce((acc, {key, value}) => (
+		{
+			...acc,
+			[key]: value
+	  })
+	, {});
+
+console.log(endShape);
+
+const endShapeMap = startShape
+	.filter( ({key}) => !/garbage/.test(key) )
+	.map(({key, value})=>({ [key]: value}))
+	.reduce((acc, curr)=>({...acc, ...curr}));
+console.log(endShapeMap);
+
+
+const startShape1 = 
+	[
+		{ key: "name", value: "jared" },
+		{ key: "kids", value: "gazillions" },
+		{ key: "age", value: "old" },
+		{ key: "food", value: "bacon" },
+		{ key: "food", value: "pizza" },
+		{ key: "food", value: "cubby's" },
+		{ key: "food", value: "wings" },
+		{ key: "food", value: "shakes" }
+	]
+/* To this shape.
+	{
+		age: "old",
+	 	kids: "gazillions",
+	 	name: "jared",
+	 	food: [
+			"bacon",
+		 	"pizza",
+		 	"cubby's",
+		 	"wings",
+		 	"shakes"
+	 	]
+	}	
+ */
+
+const endShape1 = startShape1
+	.map( ({key, value}) => ( {[key]: value}) )
+	.reduce( (acc, curr) => {
+		const key = Object.keys(curr)[0];
+		return {
+			...acc,
+			[key]: acc[key]
+						? [].concat( acc[key] ).concat( curr[key] )
+						: curr[key]
+		};
+	}, {});
+
+console.log(endShape1);
+
+//
+// The DOMContentLoaded event will fire as soon as the DOM hierarchy has been 
+// fully constructed, the  load event will do it when all the images and sub-frames 
+// have finished loading.
+//
+
+
+//
+// Groupon
+//
+function deleteNth(arr,x) {
+  var result = {};
+  var final = [];
+  for (let i=0;i<arr.length;i++) {
+    result[arr[i]] ? result[arr[i]]++ : result[arr[i]]=1;
+    if (result[arr[i]] <= x) {
+      final.push(arr[i]);
+    }
+  }
+  return final;
+}
+
+console.log(
+	'deleteNth:', deleteNth([20,37,37,20,21], 1)
+)
+
+//
+// Count & Say sequence
+// Look & Say sequence
+//
+
+//
+// 1, 11, 21, 1211, 111221, 312211, etc...
+//
+function countAndSay(n) {
+    if (n <= 0)
+        return null;
+ 
+    var result = "1";
+    var i = 1;
+ 
+    while (i < n) {
+        var sb = '';
+        var count = 1;
+        for (var j = 1; j < result.length; j++) {
+            if (result.charAt(j) == result.charAt(j - 1)) {
+                count++;
+            } else {
+                sb += count;
+                sb += result.charAt(j - 1);
+                count = 1;
+            }
+        }
+
+        sb += count;
+        sb += result.charAt(result.length - 1);
+				//console.log('--- sb:', sb, ' count:', count);
+        result = sb;
+        i++;
+    }
+ 
+    return result;
+}
+console.log(countAndSay(1));
+console.log(countAndSay(2));
+console.log(countAndSay(3));
+console.log(countAndSay(4));
+console.log(countAndSay(5));
+console.log(countAndSay(6));
+
+function countAndSay1(n, result='1') {
+	//console.log(`n:${n} result:${result}`);
+	if (n <= 1) {
+		return result;
+	}
+
+	var buffer = '';
+	var count = 1;
+	for (var j=1; j < result.length; j++) {
+		if (result.charAt(j) == result.charAt(j-1)) {
+			count++;
+		}
+		else {
+			buffer += count;
+			buffer += result.charAt(j-1);
+			count = 1;
+		}
+	}
+  
+	buffer += count;
+	buffer += result.charAt(result.length-1);
+	//console.log(`result:${result} buffer:${buffer}`);
+	result = buffer;
+
+	return countAndSay1(n-1, result);
+}
+console.log('-', countAndSay1(1));
+console.log('-', countAndSay1(2));
+console.log('-', countAndSay1(3));
+console.log('-', countAndSay1(4));
+console.log('-', countAndSay1(5));
+console.log('-', countAndSay1(6));
+console.log('-', countAndSay1(7));
+console.log('-', countAndSay1(8));
+
+
+
+
+
+function lookAndSay(number, position=0)
+{
+  if (number.length == position)
+  {
+    // reached the end which means every digit in the number is
+    // equal to one another so just read off the entire number.
+    return number.length + number.charAt(0);
+  }
+  var firstChar = number.charAt(0);
+  return firstChar == number.charAt(position) ?
+            // the current char equals to the first one so keep checking
+            lookAndSay(number, position + 1) :
+            // otherwise, read off until just before the current position
+            // then check from the current position
+            // calling this function itself again.
+            number.substring(0, position).length +
+            firstChar +
+            lookAndSay(number.substring(position), 0);
+}
+console.log(lookAndSay("1", 0));
+console.log(lookAndSay("11", 0));
+console.log(lookAndSay("21", 0));
